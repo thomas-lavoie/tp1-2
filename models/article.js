@@ -10,6 +10,6 @@ export default class Article extends Model {
         this.addField('Image', 'asset');
         this.addField('Date', 'integer');
 
-        this.setKey("Name");
+        this.setKey('Title');
     }
 }
