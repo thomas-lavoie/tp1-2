@@ -59,6 +59,10 @@ export default function Article({ article, getArticles }) {
     });
   };
 
+  const isBase64 = (str) => {
+    return str.startsWith("data:image");
+  };
+
   const resetErrors = () => {
     setTitleError("");
     setTextError("");
@@ -140,8 +144,10 @@ export default function Article({ article, getArticles }) {
         setImageError("");
       }
 
-      if (putImage.startsWith("http")) {
-        putImage = await urlToBase64(putImage);
+      // Ensure putImage is in base64 format if it's not already
+      let imageToSend = putImage;
+      if (!isBase64(putImage)) {
+        imageToSend = await urlToBase64(putImage);
       }
 
       const response = await fetch(
@@ -156,7 +162,7 @@ export default function Article({ article, getArticles }) {
             Title: putTitle,
             Text: putText,
             Category: putCategory,
-            Image: putImage,
+            Image: imageToSend,
             Date: Date.now(),
           }),
         }
