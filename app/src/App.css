@@ -28,3 +28,9 @@
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
 }
+
+.details-image {
+  max-height: 300px;
+  max-width: 450px;
+  width: 60vw;
+}

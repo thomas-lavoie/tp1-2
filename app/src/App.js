@@ -11,23 +11,19 @@ import {
   Paper,
   TextField,
   Button,
+  Autocomplete,
 } from "@mui/material";
 import NewspaperIcon from "@mui/icons-material/Newspaper";
 import AddIcon from "@mui/icons-material/Add";
-import { useState, useEffect } from "react";
+import SearchIcon from "@mui/icons-material/Search";
+import { useState, useEffect, useRef } from "react";
+import { validExtension } from "./utils.js";
 
 const theme = createTheme({
   palette: {
     mode: "dark",
   },
 });
-
-let acceptedFileFormat =
-  "image/jpeg,image/jpg,image/gif,image/png,image/bmp,image/webp,image/avif";
-
-function validExtension(ext) {
-  return acceptedFileFormat.indexOf("/" + ext) > 0;
-}
 
 function App() {
   const [createModalStatus, setCreateModalStatus] = useState(false);
@@ -41,22 +37,68 @@ function App() {
   const [imageError, setImageError] = useState("");
   const [avatarPreview, setAvatarPreview] = useState(postImage);
   const [articles, setArticles] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [category, setCategory] = useState("");
+  const [searchTerms, setSearchTerms] = useState("");
+  const [offset, setOffset] = useState(0);
+  const [previousOffsets, setPreviousOffsets] = useState([0, 1, 2]);
+  const initialMount = useRef(true);
 
   useEffect(() => {
-    getArticles();
+    getCatergories();
+    if (initialMount.current) {
+      initialMount.current = false;
+      getArticles(true);
+    }
   }, []);
 
-  async function getArticles() {
+  async function getCatergories() {
+    let url =
+      "http://localhost:5000/api/articles?sort=Category&fields=Category";
     try {
-      const response = await fetch("http://localhost:5000/api/articles");
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error(`${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json();
-      console.log(data);
-      setArticles(data);
+      let data = await response.json();
+      let categories = [];
+      for (const category of data) {
+        categories.push(category.Category);
+      }
+      setCategories(categories);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  }
+
+  async function getArticles(init = false) {
+    let url = `http://localhost:5000/api/articles?sort=Date,desc&limit=3&offset=${offset}`;
+    if (init) {
+      url = `http://localhost:5000/api/articles?sort=Date,desc&limit=6&offset=0`;
+      setPreviousOffsets([0, 1, 2]);
+    }
+    if (searchTerms !== "") {
+      url = `${url}&keywords=${searchTerms}`;
+    }
+    if (category !== "" && category !== null) {
+      url = `${url}&Category=${category}`;
+    }
+    try {
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`${response.status} ${response.statusText}`);
+      }
+
+      let data = await response.json();
+      const newArticles = [...articles, ...data];
+      if (init) {
+        setArticles(data);
+      } else {
+        setArticles(newArticles);
+      }
     } catch (error) {
       console.error("Error:", error);
     }
@@ -155,7 +197,8 @@ function App() {
 
       const data = await response.json();
       console.log(data);
-      getArticles();
+      getCatergories();
+      getArticles(true);
       handleCreateModalClose();
     } catch (error) {
       console.error("Error:", error);
@@ -173,14 +216,54 @@ function App() {
                 <IconButton onClick={() => console.log("Go home")}>
                   <NewspaperIcon />
                 </IconButton>
-                <p>Articles</p>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <div>
+                  <Autocomplete
+                    size="small"
+                    disablePortal
+                    options={categories}
+                    value={category}
+                    onChange={(e, value) => setCategory(value)}
+                    sx={{ mr: 1, width: 175 }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Catégorie"
+                        variant="outlined"
+                      />
+                    )}
+                  />
+                </div>
+                <TextField
+                  label="Recherche"
+                  size="small"
+                  sx={{ mr: 1 }}
+                  onChange={(e) => setSearchTerms(e.target.value)}
+                />
+                <IconButton onClick={() => getArticles(true)}>
+                  <SearchIcon />
+                </IconButton>
               </div>
               <IconButton onClick={handleCreateModalOpen}>
                 <AddIcon />
               </IconButton>
             </Toolbar>
           </AppBar>
-          <Articles articles={articles} />
+          <Articles
+            articles={articles}
+            getArticles={getArticles}
+            offset={offset}
+            setOffset={setOffset}
+            previousOffsets={previousOffsets}
+            setPreviousOffsets={setPreviousOffsets}
+          />
         </div>
         <Modal
           open={createModalStatus}
