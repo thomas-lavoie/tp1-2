@@ -18,6 +18,7 @@ import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import { useState, useEffect, useRef } from "react";
 import { validExtension } from "./utils.js";
+import InfoIcon from "@mui/icons-material/Info";
 
 const theme = createTheme({
   palette: {
@@ -41,6 +42,7 @@ function App() {
   const [category, setCategory] = useState("");
   const [searchTerms, setSearchTerms] = useState("");
   const [offset, setOffset] = useState(0);
+  const [aboutModalStatus, setAboutModalStatus] = useState(false);
   const [previousOffsets, setPreviousOffsets] = useState([0, 1, 2]);
   const initialMount = useRef(true);
 
@@ -251,9 +253,14 @@ function App() {
                   <SearchIcon />
                 </IconButton>
               </div>
-              <IconButton onClick={handleCreateModalOpen}>
-                <AddIcon />
-              </IconButton>
+              <div>
+                <IconButton onClick={handleCreateModalOpen} sx={{ mr: 1 }}>
+                  <AddIcon />
+                </IconButton>
+                <IconButton onClick={() => setAboutModalStatus(true)}>
+                  <InfoIcon />
+                </IconButton>
+              </div>
             </Toolbar>
           </AppBar>
           <Articles
@@ -352,6 +359,22 @@ function App() {
               {imageError}
             </p>
             <Button onClick={postArticle}>Créer</Button>
+          </Paper>
+        </Modal>
+        <Modal
+          open={aboutModalStatus}
+          onClose={() => setAboutModalStatus(false)}
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Paper
+            sx={{ px: 10, py: 5, display: "flex", flexDirection: "column" }}
+          >
+            <h2>À propos</h2>
+            <p>Ce site à été conçu par <b>Thomas Lavoie</b></p>
           </Paper>
         </Modal>
       </main>
